@@ -97,7 +97,8 @@ class Whoiser extends Process {
 		$domains = [];
 		do {
 			$model = new Domain();
-			$model->where("whois_at", Date::time());
+			$model->where("is_registered", "1", "!=");
+			$model->where("expire_at", Date::time(), "<=");
 			$model->orderBy("expire_at", "ASC");
 			$domains = $model->get([$offset, $limit]);
 			$count = count($domains);
@@ -123,7 +124,7 @@ class Whoiser extends Process {
 	 * Note: the requests is run concurrently! so, you control the number of concurrent requests with count of given domains!
 	 *
 	 * @param string[] $domains
-	 * @return array<array{"domain": string, is_registered": "yes"|"no"|string, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}>
+	 * @return array<array{"domain": string, is_registered": bool, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}>
 	 */
 	protected function getWhoisOfDomains(array $domains): array {
 		$log = Log::getInstance();
@@ -209,7 +210,7 @@ class Whoiser extends Process {
 	 *
 	 * @param string $domain that is a valid domain, like: mandi.com
 	 * 	Note: the domain should be valid! cuz It's not being checked!
-	 * @param array<array{"is_registered": "yes"|"no"|string, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}> $data
+	 * @param array<array{"is_registered": bool, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}> $data
 	 */
 	private function createOrUpdateDomain(string $domain, array $data): ?Domain {
 		$model = (new Domain)->where("domain", $domain)->getOne();
@@ -228,7 +229,7 @@ class Whoiser extends Process {
 	 * update a Domain model with given data
 	 *
 	 * @param Domain $model
-	 * @param @param array<array{"is_registered": "yes"|"no"|string, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}> $data $data
+	 * @param @param array<array{"is_registered": bool, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}> $data $data
 	 */
 	private function updateDomainModel(Domain $model, array $data) {
 		$log = Log::getInstance();

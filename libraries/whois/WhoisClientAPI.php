@@ -53,7 +53,7 @@ class WhoisClientAPI extends WhoisClient {
 
         // If there is a handler set it
         if ($handler) {
-            $this->query['file'] = "whois.$handler.php";
+            $this->query['file'] = ($handler != "gtld" ? "whois.$handler.php" : "");
             $this->query['handler'] = $handler;
         }
     }
