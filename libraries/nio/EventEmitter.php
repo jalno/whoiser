@@ -52,10 +52,13 @@ class EventEmitter {
 		}
 		for ($x = 0, $l = count($this->listeners[$name]); $x < $l; $x++) {
 			// call_user_func($this->listeners[$name][$x]['callback'], $event);
-			$this->listeners[$name][$x]['callback']->call($this, $event);
+			$result = $this->listeners[$name][$x]['callback']->call($this, $event);
 			if ($this->listeners[$name][$x]['once']) {
 				array_splice($this->listeners[$name], $x, 1);
 				$l--;
+			}
+			if ($result === false) {
+				break;
 			}
         }
 	}
