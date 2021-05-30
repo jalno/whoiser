@@ -1,0 +1,7 @@
+parameters:
+  level: 0
+  scanDirectories:
+    - ../base
+    - ../whois
+  ignoreErrors:
+    - "/(Class|Interface|Trait) .+ referenced with incorrect case/"
