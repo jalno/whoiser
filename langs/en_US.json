@@ -1,0 +1,10 @@
+{
+	"author": {
+		"name" : "Hossein Hosni",
+		"website" : "http://git.jeyserver.com/hosni"
+	},
+	"rtl": false,
+	"phrases":{
+		"cronjob.task.name.whoiser_proxies_update": "Update easy to remember domains proxy list"
+	}
+}
