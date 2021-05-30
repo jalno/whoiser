@@ -224,7 +224,6 @@ class WhoiserAPI {
 			$parsedResult = null;
 
 			$whoisResult = $e->getResult();
-			$log->info("whoisResult:", $whoisResult);
 			if ($whoisResult) {
 				$api->prepareParserForDomain($domain);
 				$rawData = ["rawdata" => explode("\n", $whoisResult)];
