@@ -3,5 +3,6 @@ parameters:
   scanDirectories:
     - ../base
     - ../whois
+    - ../cronjob
   ignoreErrors:
     - "/(Class|Interface|Trait) .+ referenced with incorrect case/"

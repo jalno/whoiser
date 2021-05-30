@@ -1,7 +1,13 @@
 {
 	"permissions": "*",
 	"autoload": {
-		"directories": ["libraries", "processes"]
+		"directories": ["libraries", "listeners", "processes"]
 	},
-	"dependencies": ["base", "whois"]
+	"dependencies": ["base", "cronjob", "whois"],
+	"events": [
+		{
+			"name": "packages/cronjob/events/tasks",
+			"listener": "listeners/Cronjob@tasks"
+		}
+	]
 }
