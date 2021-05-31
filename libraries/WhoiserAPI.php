@@ -15,7 +15,7 @@ class WhoiserAPI {
 	 * get whois of domains based on iterator and save the result into whoiser_domains table
 	 *
 	 * @param Iterator $iterator that give string of domain name
-	 * @param array<{"dry-run": bool, "verbose": bool, "max-concurrent-requests": int, "use-proxy": bool, "force-proxy": bool}> $options
+	 * @param array<{"dry-run": bool, "verbose": bool, "max-concurrent-requests": int, "use-proxy": bool, "force-proxy": bool, "retry-count-on-failure": int}> $options
 	 */
 	public static function creator(Iterator $iterator, ?array $options = null) {
 		$maxConcurrentRequests = $options["max-concurrent-requests"] ?? 10;
@@ -69,7 +69,7 @@ class WhoiserAPI {
 	 * get whois of domains based on iterator and save the result into whoiser_domains table
 	 *
 	 * @param Iterator $iterator that give Domain model
-	 * @param array<{"dry-run": bool, "verbose": bool, "max-concurrent-requests": int, "use-proxy": bool, "force-proxy": bool}> $options
+	 * @param array<{"dry-run": bool, "verbose": bool, "max-concurrent-requests": int, "use-proxy": bool, "force-proxy": bool, "retry-count-on-failure": int}> $options
 	 */
 	public static function updater(Iterator $iterator, array $options) {
 		$maxConcurrentRequests = $options["max-concurrent-requests"] ?? 10;
@@ -122,10 +122,12 @@ class WhoiserAPI {
 	 * Note: the requests is run concurrently! so, you control the number of concurrent requests with count of given domains!
 	 *
 	 * @param string[] $domains
-	 * @param array<{"use-proxy": bool, "force-proxy": bool}> $options
+	 * @param array<{"use-proxy": bool, "force-proxy": bool, "retry-count-on-failure": int}> $options
 	 * @return array<array{"domain": string, is_registered": bool, "registrar": string, "statuses": string[], "create_at": int|null, "change_at": int|null, "expire_at": int|null}>
 	 */
 	protected static function getWhoisOfDomains(array $domains, ?array $options = null) {
+		$retryCountOnFailure = $options["retry-count-on-failure"] ?? 5;
+		$retryCountOnFailure = is_numeric($retryCountOnFailure) ? $retryCountOnFailure : 5;
 		$log = Log::getInstance();
 		$loop = new EventLoop();
 
@@ -151,7 +153,7 @@ class WhoiserAPI {
 				continue;
 			}
 			self::$tryCounter[$domain] = self::$tryCounter[$domain] ?? 1;
-			if (self::$tryCounter[$domain] <= 5) {
+			if (self::$tryCounter[$domain] <= $retryCountOnFailure) {
 				$unsuccessfullDomains[] = $domain;
 				self::$tryCounter[$domain]++;
 			} else {
