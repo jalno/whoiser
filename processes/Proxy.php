@@ -15,7 +15,7 @@ class Proxy extends Process {
 		}
 		$log = Log::getInstance();
 
-		Proxy::cleanup();
+		ProxyModel::cleanup();
 
 		$log->info("get socks5 proxies...");
 		$result = $this->requestForProxies("socks5");
@@ -32,7 +32,7 @@ class Proxy extends Process {
 			foreach ($result["list"] as $proxy) {
 				ProxyModel::findOrCreate($proxy["ip"], $proxy["port"], $proxy["type"], $proxy["country_code"]);
 			}
-			Cache::set("packages.whoiser.processes.proxy.last_sync_at", $updateAt);
+			Cache::set("packages.whoiser.processes.proxy.last_sync_at", $updateAt, 0);
 		} else {
 			$log->reply("the data is not new, skip...");
 		}

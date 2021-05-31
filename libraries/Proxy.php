@@ -21,8 +21,7 @@ class Proxy extends DBObject {
 	public static function cleanup(): void {
 		$log = Log::getInstance();
 		$log->info("cleanup bad proxies...");
-		$result = DB::where("'success_count'", "fail_count", "<")
-			->delete("whoiser_proxies");
+		$result = DB::where("fail_count > success_count")->delete("whoiser_proxies");
 		$log->reply("done, result:", $result);
 	}
 
