@@ -55,9 +55,6 @@ class WhoiserAPI {
 				throw new InvalidArgumentException("the given value of iterator is not string! value: '{$domain}'");
 			}
 			$chunk[] = $domain;
-			if ((new Domain)->where("domain", $domain)->has()) {
-				continue;
-			}
 			if (count($chunk) >= $maxConcurrentRequests) {
 				$processor($chunk);
 				$chunk = array();
@@ -156,6 +153,7 @@ class WhoiserAPI {
 			self::$tryCounter[$domain] = self::$tryCounter[$domain] ?? 1;
 			if (self::$tryCounter[$domain] <= 5) {
 				$unsuccessfullDomains[] = $domain;
+				self::$tryCounter[$domain]++;
 			} else {
 				unset(self::$tryCounter[$domain]);
 			}
@@ -234,13 +232,12 @@ class WhoiserAPI {
 			$parsedResult = null;
 
 			$whoisResult = $e->getResult();
+			$log->info("whoisResult", $whoisResult);
 			if ($whoisResult) {
 				$api->prepareParserForDomain($domain);
 				$rawData = ["rawdata" => explode("\n", $whoisResult)];
 				$parsedResult = $api->process($rawData, true);
-				unset($parsedResult["rawdata"]);
-
-				if (isset($parsedResult["regrinfo"]["domain"])) {
+				if (isset($parsedResult["regrinfo"]["domain"]) or count($rawData["rawdata"]) > 2) {
 					$success = true;
 				}
 			}
