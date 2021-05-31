@@ -29,7 +29,13 @@ class WhoiserAPI {
 		$log = Log::getInstance();
 
 		/** @param string[] */
-		$processor = function (array $domains) use (&$log) {
+		$processor = function (array $domains) use (&$log, $options) {
+			$dbDomains = array_column((new Domain)->where("domain", $domains, "IN")->get(null, "domain"), "domain");
+			$domains = array_diff($domains, $dbDomains);
+			if (empty($domains)) {
+				return;
+			}
+
 			$result = self::getWhoisOfDomains($domains, $options);
 
 			if (count($domains) != count($result)) {
@@ -43,20 +49,23 @@ class WhoiserAPI {
 			}
 		};
 
+		$chunk = array();
 		foreach ($iterator as $domain) {
 			if (!is_string($domain)) {
 				throw new InvalidArgumentException("the given value of iterator is not string! value: '{$domain}'");
 			}
 			$chunk[] = $domain;
+			if ((new Domain)->where("domain", $domain)->has()) {
+				continue;
+			}
 			if (count($chunk) >= $maxConcurrentRequests) {
 				$processor($chunk);
 				$chunk = array();
 			}
-			if ($chunk) {
-				$processor($chunk);
-			}
 		}
-
+		if ($chunk) {
+			$processor($chunk);
+		}
 	}
 
 	/**
@@ -77,13 +86,13 @@ class WhoiserAPI {
 		$log = Log::getInstance();
 
 		/** @param Domain[] */
-		$processor = function (array $models) use (&$log) {
+		$processor = function (array $models) use (&$log, $options) {
 			$rawDomains = array_column($models, "domain");
 			$result = self::getWhoisOfDomains($rawDomains, $options);
 
 			if (count($models) != count($result)) {
 				$log->warn("something went wrong in get whois of one or more than one domain!");
-				$diff = array_diff($rawDomains, array_keys($result));
+				$diff = array_values(array_diff($rawDomains, array_keys($result)));
 				$log->reply("result for:", $diff, "is not exists!");
 			}
 
@@ -95,6 +104,7 @@ class WhoiserAPI {
 			}
 		};
 
+		$chunk = array();
 		foreach ($iterator as $model) {
 			if (!($model instanceof Domain)) {
 				throw new InvalidArgumentException("iterator is given wrong item! iterator should give '" . Domain::class . "' value!");
@@ -104,9 +114,9 @@ class WhoiserAPI {
 				$processor($chunk);
 				$chunk = array();
 			}
-			if ($chunk) {
-				$processor($chunk);
-			}
+		}
+		if ($chunk) {
+			$processor($chunk);
 		}
 	}
 
@@ -144,7 +154,7 @@ class WhoiserAPI {
 				continue;
 			}
 			self::$tryCounter[$domain] = self::$tryCounter[$domain] ?? 1;
-			if (self::$tryCounter[$domain] <= 3) {
+			if (self::$tryCounter[$domain] <= 5) {
 				$unsuccessfullDomains[] = $domain;
 			} else {
 				unset(self::$tryCounter[$domain]);
@@ -166,8 +176,8 @@ class WhoiserAPI {
 	 * @return TCPSocket
 	 */
 	protected static function socketCreator(string $domain, array &$result, ?array $options = null): TCPSocket {
-		$useProxy = $options["use-proxy"] ?? false;
-		$forceProxy = $options["force-proxy"] ?? false;
+		$useProxy = $options["use-proxy"] ?? true;
+		$forceProxy = $options["force-proxy"] ?? true;
 
 		$log = Log::getInstance();
 		$api = new WhoisClientAPI();
