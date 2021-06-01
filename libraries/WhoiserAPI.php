@@ -4,7 +4,7 @@ namespace packages\whoiser;
 use \Iterator;
 use \InvalidArgumentException;
 use packages\base\{Date, view\Error, DB, Log, Process};
-use packages\whoiser\{Domain, Proxy, WhoisClientAPI};
+use packages\whoiser\{Domain, events, Proxy, WhoisClientAPI};
 use packages\whoiser\nio\{Event, EventLoop, TCPSocket, Event\DataEvent, Event\CloseEvent};
 
 class WhoiserAPI {
@@ -325,7 +325,15 @@ class WhoiserAPI {
 		if ($dryRun) {
 			$log->warn("run on dry-run mode!, nothing will change!");
 		} else {
+			$event = null;
+			if ($model->isNew or empty($model->id)) {
+				$event = new events\Domain\Add($model);
+			} else {
+				$event = new events\Domain\Update($model);
+			}
+
 			$model->save();
+			$event->trigger();
 		}
 	}
 }
